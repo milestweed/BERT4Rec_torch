@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 
 from .single import Attention
+from ..utils import clones
 
 class MultiHeadAttention(nn.Module):
 
@@ -19,7 +20,7 @@ class MultiHeadAttention(nn.Module):
 
         self.dropout = nn.Dropout(p=dropout)
 
-        self.linears = nn.ModuleList([nn.Linear(d_model, d_model) for _ in range(4)])
+        self.linears = clones(nn.Linear(d_model, d_model), 4)
         self.attn = None
 
     def forward(self, 
