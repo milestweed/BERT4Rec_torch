@@ -1,4 +1,5 @@
 import math
+from typing import Tuple
 
 import torch
 import torch.nn as nn
@@ -13,7 +14,7 @@ class Attention(nn.Module):
                 key:torch.Tensor, 
                 value:torch.Tensor, 
                 mask:torch.Tensor=None, 
-                dropout:nn.Module=None) -> tuple(torch.Tensor, torch.Tensor):
+                dropout:nn.Module=None) -> Tuple[torch.Tensor, torch.Tensor]:
         
         d_k = query.shape[-1]
 
