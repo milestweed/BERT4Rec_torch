@@ -19,15 +19,38 @@ class MultiHeadAttention(nn.Module):
 
         self.dropout = nn.Dropout(p=dropout)
 
-        self.linear_layers = nn.ModuleList([nn.Linear(d_model, d_model) for _ in range(3)])
-        self.output_layer = nn.Linear(d_model, d_model)
-        self.attn = Attention()
+        self.linears = nn.ModuleList([nn.Linear(d_model, d_model) for _ in range(4)])
+        self.attn = None
 
     def forward(self, 
-                query:torch.Tensor, 
+                query:torch.Tensor,
                 key:torch.Tensor, 
                 value:torch.Tensor, 
                 mask:torch.Tensor=None):
         
-        # one batch for each user
+        if mask is not None:
+            # mask applied to all h heads
+            mask = mask.unsqueeze(1)
         nbatches = query.shape[0]
+
+        # linear projections of Q, K, and V
+        query, key, value = [
+            lin(x).view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
+            for lin, x in zip(self.linears, (query, key, value))
+        ]
+
+        # apply attention to projected vectors
+        x, self.attn = attention(
+            query, key, value, mask=mask, dropout=self.dropout
+        )
+
+        # concat with view
+        x = (
+            x.transpose(1, 2)
+            .contiguous()
+            .view(nbatches, -1, self.h * self.d_k)
+        )
+        del query
+        del key
+        del value
+        return self.linears[-1](x)
